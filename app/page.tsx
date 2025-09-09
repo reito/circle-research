@@ -1,16 +1,54 @@
-'use client';
+"use client"
 
-export default function Home() {
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { useRouter } from "next/navigation"
+
+export default function HomePage() {
+  const router = useRouter()
+
+  const handleNewStudentClick = () => {
+    router.push("/kana-selection")
+  }
+
+  const handleClubClick = () => {
+    router.push("/club-login")
+  }
+
   return (
-    <main className="min-h-screen p-8 max-w-4xl mx-auto">
-      <h1 className="text-4xl font-bold mb-8">Circle Research</h1>
-      <p className="text-lg mb-4">Welcome to Circle Research application built with Next.js and VO.</p>
-      <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg">
-        <h2 className="text-2xl font-semibold mb-4">Getting Started</h2>
-        <p className="text-gray-700 dark:text-gray-300">
-          This is a Next.js application with TypeScript and Tailwind CSS.
-        </p>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-8">
+        {/* Title Section */}
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold text-foreground text-balance">サークルリサーチ</h1>
+          <p className="text-muted-foreground text-lg">あなたにぴったりのサークル・部活動を見つけよう</p>
+        </div>
+
+        {/* Action Buttons */}
+        <Card className="p-6 space-y-4">
+          <div className="space-y-3">
+            <Button onClick={handleNewStudentClick} className="w-full h-12 text-lg font-semibold" size="lg">
+              新入生
+            </Button>
+
+            <Button
+              onClick={handleClubClick}
+              variant="secondary"
+              className="w-full h-12 text-lg font-semibold"
+              size="lg"
+            >
+              サークル・部活動
+            </Button>
+          </div>
+
+          <p className="text-sm text-muted-foreground text-center mt-4">あなたの立場を選択してください</p>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center">
+          <p className="text-xs text-muted-foreground">大学生活をもっと充実させよう</p>
+        </div>
       </div>
-    </main>
-  );
+    </div>
+  )
 }
