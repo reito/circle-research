@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-circleuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-circlepass}
+      POSTGRES_DB: ${POSTGRES_DB:-circle_research}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-circleuser}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-circleuser}:${POSTGRES_PASSWORD:-circlepass}@db:5432/${POSTGRES_DB:-circle_research}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 開発環境用のサービス
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-circleuser}:${POSTGRES_PASSWORD:-circlepass}@db:5432/${POSTGRES_DB:-circle_research}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
