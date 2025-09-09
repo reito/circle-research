@@ -79,28 +79,28 @@ npm run dev
 
 ```bash
 # マイグレーションファイルの作成と実行
-npm run db:migrate
+docker-compose exec npm run db:migrate
 
 # データベーススキーマの同期（マイグレーション履歴なし）
-npm run db:push
+docker-compose exec npm run db:push
 
 # Prisma Clientの生成
-npm run db:generate
+docker-compose exec npm run db:generate
 
 # Prisma Studio（データベースGUI）
-npm run db:studio
+docker-compose exec npm run db:studio
 ```
 
 ## 利用可能なコマンド
 
 | コマンド | 説明 |
 |---------|------|
-| `npm run dev` | 開発サーバーを起動 |
-| `npm run build` | 本番用ビルドを作成 |
-| `npm run start` | 本番サーバーを起動 |
-| `npm run lint` | ESLintでコードをチェック |
-| `npm run db:migrate` | Prismaマイグレーションを実行 |
-| `npm run db:studio` | Prisma Studioを起動 |
+| `docker-compose exec npm run dev` | 開発サーバーを起動 |
+| `docker-compose exec npm run build` | 本番用ビルドを作成 |
+| `docker-compose exec npm run start` | 本番サーバーを起動 |
+| `docker-compose exec npm run lint` | ESLintでコードをチェック |
+| `docker-compose exec npm run db:migrate` | Prismaマイグレーションを実行 |
+| `docker-compose exec npm run db:studio` | Prisma Studioを起動 |
 
 ## Docker Composeコマンド
 
