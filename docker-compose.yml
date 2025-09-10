@@ -13,7 +13,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-circleuser}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-circleuser} -d ${POSTGRES_DB:-circle_research}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,6 +28,8 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://${POSTGRES_USER:-circleuser}:${POSTGRES_PASSWORD:-circlepass}@db:5432/${POSTGRES_DB:-circle_research}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-secret-key-here-change-in-production}
     depends_on:
       db:
         condition: service_healthy
@@ -47,6 +49,8 @@ services:
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://${POSTGRES_USER:-circleuser}:${POSTGRES_PASSWORD:-circlepass}@db:5432/${POSTGRES_DB:-circle_research}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3001}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-secret-key-here-change-in-production}
     depends_on:
       db:
         condition: service_healthy
