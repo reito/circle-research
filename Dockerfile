@@ -17,8 +17,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Prisma のクライアントを生成
+RUN npx prisma generate
+
 # Next.js の設定で standalone 出力を有効にする必要がある
 RUN npm run build
+
 
 # 実行用ステージ
 FROM base AS runner

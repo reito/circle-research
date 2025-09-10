@@ -17,9 +17,8 @@ export default function ClubRegisterPage() {
 
   const handleRegister = () => {
     // 汎用登録ページへリダイレクト
-    router.push("/register")
-      return
-    }
+    // router.push("/register")
+    // return
 
     if (newPassword.length < 6) {
       setError("パスワードは6文字以上で入力してください")
