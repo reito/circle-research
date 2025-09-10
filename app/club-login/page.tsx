@@ -15,12 +15,8 @@ export default function ClubLoginPage() {
   const [error, setError] = useState("")
 
   const handleLogin = () => {
-    if (id === "test" && password === "password") {
-      // ログイン成功 - サークル管理ダッシュボードへ遷移
-      router.push("/club-dashboard")
-    } else {
-      setError("IDまたはパスワードが正しくありません")
-    }
+    // 汎用ログインページへリダイレクト
+    router.push("/login?callbackUrl=/club-dashboard")
   }
 
   const handleCreateAccount = () => {

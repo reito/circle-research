@@ -52,5 +52,20 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # マイグレーション実行用のサービス
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-circleuser}:${POSTGRES_PASSWORD:-circlepass}@db:5432/${POSTGRES_DB:-circle_research}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npx prisma migrate deploy
+    volumes:
+      - ./prisma:/app/prisma
+
 volumes:
   postgres_data:

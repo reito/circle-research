@@ -8,6 +8,10 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
+# Prismaスキーマをコピーしてクライアントを生成
+COPY prisma ./prisma
+RUN npx prisma generate
+
 # ソースコードはボリュームマウントするので、ここではコピーしない
 
 EXPOSE 3000

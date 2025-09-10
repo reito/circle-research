@@ -16,18 +16,8 @@ export default function ClubRegisterPage() {
   const [error, setError] = useState("")
 
   const handleRegister = () => {
-    if (!newId || !newPassword || !confirmPassword) {
-      setError("すべての項目を入力してください")
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError("パスワードが一致しません")
-      return
-    }
-
-    if (newId.length < 3) {
-      setError("IDは3文字以上で入力してください")
+    // 汎用登録ページへリダイレクト
+    router.push("/register")
       return
     }
 

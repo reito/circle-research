@@ -10,11 +10,52 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Example model
-model User {
+// University model
+model University {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
+  name      String   @unique
+  domain    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  users     User[]
+  clubs     Club[]
+}
+
+// User model
+model User {
+  id             Int       @id @default(autoincrement())
+  universityId   Int
+  email          String
+  name           String
+  authProvider   String    @default("password") // password, google, azure_ad, etc.
+  passwordDigest String?
+  lastSignInAt   DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  university     University @relation(fields: [universityId], references: [id])
+  clubs          Club[]     @relation("ClubOwner")
+  
+  @@unique([universityId, email])
+}
+
+// Club model
+model Club {
+  id           Int        @id @default(autoincrement())
+  universityId Int
+  ownerId      Int
+  name         String
+  memberCount  Int        @default(1)
+  description  String?
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  university   University @relation(fields: [universityId], references: [id])
+  owner        User       @relation("ClubOwner", fields: [ownerId], references: [id])
+  
+  @@unique([universityId, name])
+  @@index([universityId])
 }
