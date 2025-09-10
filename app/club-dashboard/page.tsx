@@ -26,7 +26,7 @@ interface Club {
 export default function ClubDashboardPage() {
   const router = useRouter()
   const { data: session, status } = useSession()
-  
+
   const [clubs, setClubs] = useState<Club[]>([])
   const [selectedClub, setSelectedClub] = useState<Club | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -41,7 +41,7 @@ export default function ClubDashboardPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login?callbackUrl=/club-dashboard")
+      router.push("/club-login?callbackUrl=/club-dashboard")
     } else if (status === "authenticated") {
       fetchClubs()
     }
@@ -135,7 +135,7 @@ export default function ClubDashboardPage() {
 
     setIsCreating(true)
     setError("")
-    
+
     // 新規作成フォームを初期化
     setEditForm({
       name: "",
@@ -273,15 +273,15 @@ export default function ClubDashboardPage() {
                 )}
                 {(isEditing || isCreating) && (
                   <div className="flex gap-2">
-                    <Button 
-                      onClick={isCreating ? handleCreateSave : handleSave} 
+                    <Button
+                      onClick={isCreating ? handleCreateSave : handleSave}
                       size="sm"
                       disabled={isLoading}
                     >
                       <Save className="h-4 w-4 mr-2" />
                       {isLoading ? "保存中..." : "保存"}
                     </Button>
-                    <Button 
+                    <Button
                       onClick={() => {
                         if (isCreating) {
                           setIsCreating(false)
@@ -296,8 +296,8 @@ export default function ClubDashboardPage() {
                           handleCancel()
                         }
                         setError("")
-                      }} 
-                      variant="outline" 
+                      }}
+                      variant="outline"
                       size="sm"
                       disabled={isLoading}
                     >

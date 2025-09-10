@@ -36,7 +36,7 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!selectedUniversity || !name || !email || !password || !confirmPassword) {
       setError("すべての項目を入力してください")
       return
@@ -75,7 +75,7 @@ export default function RegisterPage() {
         setError(data.error || "登録に失敗しました")
       } else {
         // 登録成功 - ログインページへリダイレクト
-        router.push("/login?registered=true")
+  router.push("/club-login?registered=true")
       }
     } catch (error) {
       setError("登録に失敗しました")
@@ -85,7 +85,7 @@ export default function RegisterPage() {
   }
 
   const handleBack = () => {
-    router.push("/login")
+  router.push("/club-login")
   }
 
   return (

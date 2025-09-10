@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { ArrowLeft } from "lucide-react"
 
 export default function ClubLoginPage() {
@@ -15,8 +16,19 @@ export default function ClubLoginPage() {
   const [error, setError] = useState("")
 
   const handleLogin = () => {
-    // 汎用ログインページへリダイレクト
-    router.push("/login?callbackUrl=/club-dashboard")
+    setError("")
+    signIn("credentials", {
+      redirect: false,
+      id,
+      password,
+      callbackUrl: "/club-dashboard"
+    }).then((result) => {
+      if (result?.error) {
+        setError("ログインに失敗しました")
+      } else {
+        router.push("/club-dashboard")
+      }
+    })
   }
 
   const handleCreateAccount = () => {
@@ -55,7 +67,6 @@ export default function ClubLoginPage() {
                 placeholder="IDを入力してください"
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="password">パスワード</Label>
               <Input

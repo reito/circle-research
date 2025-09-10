@@ -10,22 +10,18 @@ const handler = NextAuth({
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-        universityId: { label: "University ID", type: "number" },
+  id: { label: "ID", type: "text" },
+  password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password || !credentials?.universityId) {
+        if (!credentials?.id || !credentials?.password) {
           return null
         }
 
         try {
-          const user = await prisma.user.findUnique({
+          const user = await prisma.user.findFirst({
             where: {
-              universityId_email: {
-                universityId: parseInt(credentials.universityId),
-                email: credentials.email,
-              },
+              name: credentials.id,
             },
             include: {
               university: true,
@@ -87,7 +83,7 @@ const handler = NextAuth({
     },
   },
   pages: {
-    signIn: "/login",
+  signIn: "/club-login",
     error: "/auth/error",
   },
 })
