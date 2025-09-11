@@ -75,6 +75,13 @@ export default function ChatPage() {
 
   useEffect(() => {
     setIsHydrated(true)
+    // チャット画面でのパラメータをコンソール出力
+    console.log("=== チャット画面 - パラメータ情報 ===")
+    console.log("大学名:", universityName)
+    console.log("大学ID:", universityId)
+    console.log("かな:", kana)
+    console.log("URL:", window.location.href)
+    console.log("=====================================")
   }, [])
   const [inputText, setInputText] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -125,7 +132,26 @@ export default function ChatPage() {
       })
 
       const data = await response.json()
-      console.log("API Response:", data) // デバッグ用ログ
+      console.log("=== API レスポンス詳細 ===")
+      console.log("送信した大学名:", universityName)
+      console.log("送信した大学ID:", universityId)
+      console.log("API Response:", data)
+      
+      if (data.debug) {
+        console.log("--- サークル取得情報 ---")
+        console.log("取得した大学:", data.debug.universityName)
+        console.log("大学ID:", data.debug.universityId)
+        console.log("サークル数:", data.debug.clubsCount)
+        console.log("サークル一覧:")
+        data.debug.clubs.forEach((club: any) => {
+          console.log(`  - ${club.name} (ID: ${club.id}, 人数: ${club.memberCount})`)
+        })
+        if (data.debug.error) {
+          console.log("エラー:", data.debug.error)
+        }
+        console.log("---------------------")
+      }
+      console.log("==========================")
 
       if (response.ok && data.response) {
         console.log("Bot response text:", data.response) // デバッグ用ログ
