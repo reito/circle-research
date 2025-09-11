@@ -178,10 +178,16 @@ export async function POST(req: NextRequest) {
 
 ${categorizedClubs ? `
 【${universityName}で利用可能なサークル（これ以外のサークルは存在しません）】
-${categorizedClubs.sports.length > 0 ? `✅ スポーツ系(${categorizedClubs.sports.length}個): ${categorizedClubs.sports.map(c => `${c.name}(${c.memberCount}人)`).join(", ")}` : "❌ スポーツ系: なし"}
-${categorizedClubs.culture.length > 0 ? `\n✅ 文化系(${categorizedClubs.culture.length}個): ${categorizedClubs.culture.map(c => `${c.name}(${c.memberCount}人)`).join(", ")}` : "\n❌ 文化系: なし"}
-${categorizedClubs.volunteer.length > 0 ? `\n✅ ボランティア系(${categorizedClubs.volunteer.length}個): ${categorizedClubs.volunteer.map(c => `${c.name}(${c.memberCount}人)`).join(", ")}` : "\n❌ ボランティア系: なし"}
-${categorizedClubs.other.length > 0 ? `\n✅ その他(${categorizedClubs.other.length}個): ${categorizedClubs.other.map(c => `${c.name}(${c.memberCount}人)`).join(", ")}` : "\n❌ その他: なし"}` : "\n【サークル情報】現在データを準備中です。"}
+${categorizedClubs.sports.length > 0 ? `✅ スポーツ系(${categorizedClubs.sports.length}個): ${categorizedClubs.sports.map(c => `${c.name}[ID:${c.id}](${c.memberCount}人)`).join(", ")}` : "❌ スポーツ系: なし"}
+${categorizedClubs.culture.length > 0 ? `\n✅ 文化系(${categorizedClubs.culture.length}個): ${categorizedClubs.culture.map(c => `${c.name}[ID:${c.id}](${c.memberCount}人)`).join(", ")}` : "\n❌ 文化系: なし"}
+${categorizedClubs.volunteer.length > 0 ? `\n✅ ボランティア系(${categorizedClubs.volunteer.length}個): ${categorizedClubs.volunteer.map(c => `${c.name}[ID:${c.id}](${c.memberCount}人)`).join(", ")}` : "\n❌ ボランティア系: なし"}
+${categorizedClubs.other.length > 0 ? `\n✅ その他(${categorizedClubs.other.length}個): ${categorizedClubs.other.map(c => `${c.name}[ID:${c.id}](${c.memberCount}人)`).join(", ")}` : "\n❌ その他: なし"}` : "\n【サークル情報】現在データを準備中です。"}
+
+【サークルのリンク表記ルール】
+- サークルを紹介する際は必ずサークル名をリンク形式で表記
+- 形式: [サークル名|club-info-view?id=サークルID]
+- 例: [テニスサークル|club-info-view?id=1]、[サッカー部|club-info-view?id=2]
+- IDを直接言及せず、自然な文章で紹介
 
 【問いかけ例】
 - 「どんなジャンルに興味がありますか？」
@@ -192,12 +198,14 @@ ${categorizedClubs.other.length > 0 ? `\n✅ その他(${categorizedClubs.other.
 
 【正しい回答例】
 Q: スポーツ系はある？
-→ リストにスポーツ系がある場合: 「はい！${universityName}には[正確なサークル名]があります。どれか気になりますか？」
+→ リストにスポーツ系がある場合: 「はい！${universityName}には[テニスサークル|club-info-view?id=1](25人)、[サッカー部|club-info-view?id=2](28人)などがあります。どちらも初心者歓迎ですよ！どれか気になりますか？」
 → リストにスポーツ系がない場合: 「申し訳ないですが、${universityName}には現在スポーツ系のサークルがないようです。他のジャンルに興味はありますか？」
 
 【絶対にダメな回答例】
 ❌「テニス部やサッカー部があります」（リストにない場合）
-❌「一般的にはバスケ部などがあります」（推測で答える）`
+❌「一般的にはバスケ部などがあります」（推測で答える）
+❌ リンクなしでサークルを紹介する
+❌ IDを直接表示する「ID:1」「詳細はこちら」などの不自然な表現`
 
     // OpenAI APIを呼び出し
     try {

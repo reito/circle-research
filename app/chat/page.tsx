@@ -9,6 +9,45 @@ import { Input } from "@/components/ui/input"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Send } from "lucide-react"
 
+// メッセージ内のリンクを解析してクリック可能にする関数
+const parseMessageWithLinks = (text: string, router: any) => {
+  // [サークル名|club-info-view?id=123] 形式を解析
+  const linkRegex = /\[([^\]]+)\|club-info-view\?id=(\d+)\]/g
+  const elements: (string | JSX.Element)[] = []
+  let lastIndex = 0
+  let match
+  let keyIndex = 0
+
+  while ((match = linkRegex.exec(text)) !== null) {
+    // マッチ前のテキスト
+    if (match.index > lastIndex) {
+      elements.push(text.substring(lastIndex, match.index))
+    }
+
+    // リンク部分
+    const clubName = match[1]
+    const clubId = match[2]
+    elements.push(
+      <button
+        key={`link-${keyIndex++}`}
+        onClick={() => router.push(`/club-info-view?id=${clubId}`)}
+        className="text-blue-600 hover:text-blue-800 underline font-medium"
+      >
+        {clubName}
+      </button>
+    )
+
+    lastIndex = match.index + match[0].length
+  }
+
+  // 残りのテキスト
+  if (lastIndex < text.length) {
+    elements.push(text.substring(lastIndex))
+  }
+
+  return elements.length > 0 ? elements : text
+}
+
 interface Message {
   id: number
   text: string
@@ -147,7 +186,9 @@ export default function ChatPage() {
                   message.isUser ? "bg-primary text-primary-foreground" : "bg-card text-card-foreground"
                 }`}
               >
-                <p className="text-sm leading-relaxed">{message.text}</p>
+                <div className="text-sm leading-relaxed">
+                  {message.isUser ? message.text : parseMessageWithLinks(message.text, router)}
+                </div>
                 <p
                   className={`text-xs mt-1 ${message.isUser ? "text-primary-foreground/70" : "text-muted-foreground"}`}
                 >
