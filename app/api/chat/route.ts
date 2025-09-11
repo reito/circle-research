@@ -186,7 +186,7 @@ export async function POST(req: NextRequest) {
 ⚠️ 下記の【利用可能なサークル】リストにある正確な名前のサークルのみ紹介する
 ⚠️ 「スポーツ系サークル」「文化系サークル」などの一般的な名称は使わない
 ⚠️ 存在しないサークルを勝手に作り出して紹介してはいけない
-⚠️ サークル名を出すときは必ずリンク形式 [サークル名|club-info-view?id=ID] を使用する
+⚠️ サークル名を出すときは必ずMarkdownリンク形式 [サークル名](club-info-view?id=ID) を使用する
 ⚠️ リンクなしでサークル名を書いてはいけない（例：「柔道部」や「剣道部」と書くのはダメ）
 ⚠️ 各カテゴリーの説明は「スポーツ系には〜」のように言及し、具体的なサークル名を列挙
 
@@ -219,9 +219,9 @@ ${categorizedClubs.volunteer.length > 0 ? categorizedClubs.volunteer.map(c => `�
 ${categorizedClubs.other.length > 0 ? categorizedClubs.other.map(c => `・${c.name} [ID:${c.id}] 部員数:${c.memberCount}人`).join("\n") : "なし"}` : "\n【サークル情報】現在データを準備中です。"}
 
 【サークルのリンク表記の厳格なルール】
-- サークル名を記載する際は、100%必ずリンク形式で表記する
-- 形式: [サークル名|club-info-view?id=サークルID]
-- 例: [テニスサークル|club-info-view?id=1]、[サッカー部|club-info-view?id=2]
+- サークル名を記載する際は、100%必ずMarkdownリンク形式で表記する
+- 形式: [サークル名](club-info-view?id=サークルID)
+- 例: [テニスサークル](club-info-view?id=1)、[サッカー部](club-info-view?id=2)
 - IDを直接言及せず、自然な文章で紹介
 - リンクを付けずにサークル名を書くことは厳禁
 
@@ -234,13 +234,13 @@ ${categorizedClubs.other.length > 0 ? categorizedClubs.other.map(c => `・${c.na
 
 【正しい回答例】
 Q: サークル何があるの？
-✅ 「${universityName}にはスポーツ系で[バスケットボール部|club-info-view?id=22](26人)、文化系で[落語研究会|club-info-view?id=21](12人)や[漫画研究会|club-info-view?id=23](22人)、他にも[環境サークル|club-info-view?id=24](28人)などがあります！どんなジャンルに興味がありますか？」
+✅ 「${universityName}にはスポーツ系で[バスケットボール部](club-info-view?id=22)(26人)、文化系で[落語研究会](club-info-view?id=21)(12人)や[漫画研究会](club-info-view?id=23)(22人)、他にも[環境サークル](club-info-view?id=24)(28人)などがあります！どんなジャンルに興味がありますか？」
 
 Q: 柔道部と剣道部どちらが人数多い？
-✅ 上記リストを確認して: 「[柔道部|club-info-view?id=18](18人)と[剣道部|club-info-view?id=16](16人)では、[柔道部|club-info-view?id=18]の方が人数が多いですね！どちらも武道系で人気ですよ。興味はありますか？」
+✅ 上記リストを確認して: 「[柔道部](club-info-view?id=18)(18人)と[剣道部](club-info-view?id=16)(16人)では、[柔道部](club-info-view?id=18)の方が人数が多いですね！どちらも武道系で人気ですよ。興味はありますか？」
 
 Q: テニス部はある？（リストにない場合）
-✅ 「申し訳ないですが、${universityName}にはテニス部がないようです。スポーツ系では[柔道部|club-info-view?id=18]や[剣道部|club-info-view?id=16]などがありますよ！他に興味のあるスポーツはありますか？」
+✅ 「申し訳ないですが、${universityName}にはテニス部がないようです。スポーツ系では[柔道部](club-info-view?id=18)や[剣道部](club-info-view?id=16)などがありますよ！他に興味のあるスポーツはありますか？」
 
 【絶対にダメな回答例】
 ❌「柔道部や剣道部があります」（リンクなし）
