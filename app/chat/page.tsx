@@ -31,6 +31,7 @@ export default function ChatPage() {
     },
   ])
   const [inputText, setInputText] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -41,8 +42,8 @@ export default function ChatPage() {
     scrollToBottom()
   }, [messages])
 
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || isLoading) return
 
     const userMessage: Message = {
       id: messages.length + 1,
@@ -51,19 +52,57 @@ export default function ChatPage() {
       timestamp: new Date(),
     }
 
+    const messageText = inputText // 値を保存
     setMessages((prev) => [...prev, userMessage])
     setInputText("")
+    setIsLoading(true)
 
-    // Simulate bot response
-    setTimeout(() => {
+    try {
+      // AI APIを呼び出し
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: messageText, // 保存した値を使用
+          universityName: universityName,
+          // 将来的に大学IDを追加する場合はここに
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.response) {
+        const botResponse: Message = {
+          id: messages.length + 2,
+          text: data.response,
+          isUser: false,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, botResponse])
+      } else {
+        // エラーの場合はフォールバックメッセージ
+        const botResponse: Message = {
+          id: messages.length + 2,
+          text: "申し訳ありません、一時的にお答えできません。しばらく待ってから再度お試しください。",
+          isUser: false,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, botResponse])
+      }
+    } catch (error) {
+      console.error("Chat error:", error)
       const botResponse: Message = {
         id: messages.length + 2,
-        text: `「${inputText}」について詳しく教えますね！${universityName}には様々なサークルがあります。具体的にどのような活動に興味がありますか？`,
+        text: "ネットワークエラーが発生しました。インターネット接続を確認してください。",
         isUser: false,
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, botResponse])
-    }, 1000)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -114,6 +153,20 @@ export default function ChatPage() {
               </Card>
             </div>
           ))}
+          {isLoading && (
+            <div className="flex justify-start">
+              <Card className="max-w-xs sm:max-w-md p-3 bg-card text-card-foreground">
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1">
+                    <div className="h-2 w-2 bg-muted-foreground rounded-full animate-pulse" />
+                    <div className="h-2 w-2 bg-muted-foreground rounded-full animate-pulse delay-100" />
+                    <div className="h-2 w-2 bg-muted-foreground rounded-full animate-pulse delay-200" />
+                  </div>
+                  <span className="text-sm text-muted-foreground">考え中...</span>
+                </div>
+              </Card>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -128,8 +181,12 @@ export default function ChatPage() {
             placeholder="メッセージを入力..."
             className="flex-1"
           />
-          <Button onClick={handleSendMessage} disabled={!inputText.trim()} size="icon">
-            <Send className="h-4 w-4" />
+          <Button onClick={handleSendMessage} disabled={!inputText.trim() || isLoading} size="icon">
+            {isLoading ? (
+              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
