@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel"
+import { ImageOff } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -18,7 +20,8 @@ export default function ClubInfoViewPage() {
   const [memberCount, setMemberCount] = useState("")
   const [description, setDescription] = useState("")
   const [error, setError] = useState("")
-  const [imageUrl, setImageUrl] = useState<string>("")
+    const [images, setImages] = useState<string[]>([])
+    const [imageUrl, setImageUrl] = useState<string>("")
 
   // 大学リスト取得
   useEffect(() => {
@@ -48,10 +51,13 @@ export default function ClubInfoViewPage() {
           setMemberCount(club.memberCount ? String(club.memberCount) : "")
           setDescription(club.description || "")
           setSelectedUniversityId(club.universityId ? String(club.universityId) : "")
-          // 画像URLを一度だけセット
-          const uniName = universities.find(u => u.id.toString() === (club.universityId ? String(club.universityId) : ""))?.name || "circle"
-          const query = encodeURIComponent(`${club.name} ${uniName}`)
-          setImageUrl(`https://source.unsplash.com/800x600/?${query}`)
+          setImages(Array.isArray(club.images) ? club.images : [])
+          // 画像がなければUnsplash
+          if (!club.images || club.images.length === 0) {
+            const uniName = universities.find(u => u.id.toString() === (club.universityId ? String(club.universityId) : ""))?.name || "circle"
+            const query = encodeURIComponent(`${club.name} ${uniName}`)
+            setImageUrl(`https://source.unsplash.com/800x600/?${query}`)
+          }
         }
       })
       .catch(() => setError("サークル情報の取得に失敗しました"))
@@ -60,10 +66,6 @@ export default function ClubInfoViewPage() {
 
   // 画像のonErrorでfallback
   const fallbackImage = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"
-  const [imgSrc, setImgSrc] = useState<string>("")
-  useEffect(() => {
-    setImgSrc(imageUrl || fallbackImage)
-  }, [imageUrl])
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -73,25 +75,9 @@ export default function ClubInfoViewPage() {
           <p className="text-lg text-muted-foreground">新入生向けサークル紹介ページ</p>
         </div>
         <Card className="p-0 overflow-hidden shadow-xl">
-          <div className="flex flex-col md:flex-row">
-            {/* 画像エリア */}
-            <div className="md:w-1/2 w-full h-64 md:h-auto bg-muted flex items-center justify-center">
-              <img
-                src={imgSrc}
-                alt={clubName || "サークルイメージ"}
-                className="object-cover w-full h-full"
-                style={{ minHeight: "16rem" }}
-                onError={() => setImgSrc(fallbackImage)}
-              />
-            </div>
-            {/* 情報エリア */}
-            <div className="md:w-1/2 w-full p-8 flex flex-col justify-center space-y-6">
-              <div>
-                <span className="text-sm font-semibold text-muted-foreground">大学名</span>
-                <div className="text-lg font-bold text-foreground mb-2">
-                  {universities.find(u => u.id.toString() === selectedUniversityId)?.name || "-"}
-                </div>
-              </div>
+          <div className="flex flex-col">
+            {/* 情報エリア（大学名は非表示） */}
+            <div className="w-full p-8 flex flex-col justify-center space-y-6">
               <div>
                 <span className="text-sm font-semibold text-muted-foreground">人数</span>
                 <div className="text-lg text-foreground mb-2">{memberCount ? `${memberCount}人` : "-"}</div>
@@ -103,6 +89,35 @@ export default function ClubInfoViewPage() {
                 </div>
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
+            </div>
+            {/* 画像エリア（カルーセル）を下に配置 */}
+            <div className="w-full bg-muted py-4 relative">
+              {images.length > 0 ? (
+                <Carousel className="w-full max-w-xl mx-auto" opts={{ loop: true }}>
+                  <CarouselContent>
+                    {images.map((img, idx) => (
+                      <CarouselItem key={idx} className="block w-full">
+                        <div className="w-full aspect-[4/3] flex items-center justify-center">
+                          <img
+                            src={img}
+                            alt={`club-img-${idx}`}
+                            className="object-contain w-full h-full rounded"
+                            style={{ maxHeight: "400px" }}
+                            onError={(e) => { (e.target as HTMLImageElement).src = fallbackImage }}
+                          />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
+              ) : (
+                <div className="w-full aspect-[4/3] flex flex-col items-center justify-center text-muted-foreground">
+                  <ImageOff className="w-16 h-16 mb-2" />
+                  <span className="text-lg">No Image</span>
+                </div>
+              )}
             </div>
           </div>
         </Card>

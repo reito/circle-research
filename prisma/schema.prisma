@@ -18,7 +18,7 @@ model University {
   reading   String?  // ふりがなフィールドを追加
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   users     User[]
   clubs     Club[]
 }
@@ -35,14 +35,20 @@ model User {
   isActive       Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-  
+
   university     University @relation(fields: [universityId], references: [id])
   clubs          Club[]     @relation("ClubOwner")
-  
+
   @@unique([universityId, email])
 }
 
 // Club model
+enum ClubCategory {
+  SPORTS
+  CULTURE
+  OTHER
+}
+
 model Club {
   id           Int        @id @default(autoincrement())
   universityId Int
@@ -50,13 +56,15 @@ model Club {
   name         String
   memberCount  Int        @default(1)
   description  String?
+  category     ClubCategory @default(OTHER)
+  images       String[]
   isActive     Boolean    @default(true)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  
+
   university   University @relation(fields: [universityId], references: [id])
   owner        User       @relation("ClubOwner", fields: [ownerId], references: [id])
-  
+
   @@unique([universityId, name])
   @@index([universityId])
 }
