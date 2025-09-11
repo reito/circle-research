@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel"
 import { ImageOff } from "lucide-react"
 import { Card } from "@/components/ui/card"
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useSearchParams } from "next/navigation"
 
-export default function ClubInfoViewPage() {
+function ClubInfoContent() {
   const searchParams = useSearchParams()
   const clubId = searchParams.get("id")
 
@@ -123,5 +123,19 @@ export default function ClubInfoViewPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function ClubInfoViewPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="text-center">
+          <div className="text-lg">読み込み中...</div>
+        </div>
+      </div>
+    }>
+      <ClubInfoContent />
+    </Suspense>
   )
 }
