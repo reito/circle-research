@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { prisma } from "@/lib/prisma"
+import { authOptions } from "@/lib/auth"
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession()
-    
+    const session = await getServerSession(authOptions)
+
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     // Get user with their clubs
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: Number(session.user.id) },
       include: {
         clubs: {
           include: {
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Error fetching clubs:", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error!!!" },
       { status: 500 }
     )
   }
@@ -44,8 +45,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession()
-    
+    const session = await getServerSession(authOptions)
+
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -64,30 +65,19 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Get user
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      )
-    }
-
+    console.log(session)
     // Create club
     const club = await prisma.club.create({
       data: {
-        name,
-        memberCount: memberCount || 1,
-        description: description || "",
-        universityId: parseInt(universityId),
-        ownerId: user.id,
+      name,
+      memberCount: memberCount ? Number(memberCount) : 1,
+      description: description || "",
+      universityId: Number(universityId),
+      ownerId: Number(session.user.id)
       },
       include: {
-        university: true,
-        owner: true,
+      university: true,
+      owner: true,
       },
     })
 
@@ -95,14 +85,14 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     if (error.code === "P2002") {
       return NextResponse.json(
-        { error: "Club name already exists in this university" },
+        { error: "Club name already exists in this university!" },
         { status: 409 }
       )
     }
-    
+
     console.error("Error creating club:", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error!" },
       { status: 500 }
     )
   }

@@ -21,12 +21,12 @@ export default function ClubLoginPage() {
       redirect: false,
       id,
       password,
-      callbackUrl: "/club-dashboard"
+      callbackUrl: "/club-info-form"
     }).then((result) => {
       if (result?.error) {
         setError("ログインに失敗しました")
       } else {
-        router.push("/club-dashboard")
+        router.push("/club-info-form")
       }
     })
   }
@@ -89,12 +89,7 @@ export default function ClubLoginPage() {
             </Button>
           </div>
 
-          {/* Test Account Info */}
-          <div className="mt-4 p-3 bg-muted rounded-md">
-            <p className="text-xs text-muted-foreground text-center">
-              テスト用アカウント: ID「test」パスワード「password」
-            </p>
-          </div>
+
         </Card>
       </div>
     </div>

@@ -10,7 +10,7 @@ export async function middleware(req: NextRequest) {
 
   const isProtectedRoute = req.nextUrl.pathname.startsWith("/dashboard") ||
                           req.nextUrl.pathname.startsWith("/profile") ||
-                          req.nextUrl.pathname.startsWith("/club-dashboard")
+                          req.nextUrl.pathname.startsWith("/club-info-form")
 
   // Redirect to login if accessing protected route without token
   if (isProtectedRoute && !token) {
@@ -19,7 +19,7 @@ export async function middleware(req: NextRequest) {
 
   // Redirect to dashboard if accessing auth pages with token
   if (isAuthPage && token) {
-    return NextResponse.redirect(new URL("/dashboard", req.url))
+    return NextResponse.redirect(new URL("/club-info-form", req.url))
   }
 
   return NextResponse.next()
@@ -31,6 +31,6 @@ export const config = {
     "/club-register",
     "/dashboard/:path*",
     "/profile/:path*",
-    "/club-dashboard/:path*",
+    "/club-info-form/:path*",
   ],
 }
