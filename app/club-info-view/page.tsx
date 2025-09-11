@@ -18,6 +18,7 @@ export default function ClubInfoViewPage() {
   const [memberCount, setMemberCount] = useState("")
   const [description, setDescription] = useState("")
   const [error, setError] = useState("")
+  const [imageUrl, setImageUrl] = useState<string>("")
 
   // 大学リスト取得
   useEffect(() => {
@@ -47,66 +48,62 @@ export default function ClubInfoViewPage() {
           setMemberCount(club.memberCount ? String(club.memberCount) : "")
           setDescription(club.description || "")
           setSelectedUniversityId(club.universityId ? String(club.universityId) : "")
+          // 画像URLを一度だけセット
+          const uniName = universities.find(u => u.id.toString() === (club.universityId ? String(club.universityId) : ""))?.name || "circle"
+          const query = encodeURIComponent(`${club.name} ${uniName}`)
+          setImageUrl(`https://source.unsplash.com/800x600/?${query}`)
         }
       })
       .catch(() => setError("サークル情報の取得に失敗しました"))
-  }, [clubId])
+  }, [clubId, universities])
+
+
+  // 画像のonErrorでfallback
+  const fallbackImage = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"
+  const [imgSrc, setImgSrc] = useState<string>("")
+  useEffect(() => {
+    setImgSrc(imageUrl || fallbackImage)
+  }, [imageUrl])
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-2xl space-y-6">
+      <div className="w-full max-w-3xl space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">サークル情報</h1>
-          <p className="text-muted-foreground">新入生向けサークル情報の閲覧ページです</p>
+          <h1 className="text-4xl font-extrabold text-foreground mb-2">{clubName || "サークル情報"}</h1>
+          <p className="text-lg text-muted-foreground">新入生向けサークル紹介ページ</p>
         </div>
-        <Card className="p-6 space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="university">大学名</Label>
-              <Select value={selectedUniversityId} disabled>
-                <SelectTrigger className="text-foreground">
-                  <SelectValue placeholder="大学を選択してください" className="text-foreground" />
-                </SelectTrigger>
-                <SelectContent>
-                  {universities.map((u) => (
-                    <SelectItem key={u.id} value={u.id.toString()} className="text-foreground">
-                      {u.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="clubName">サークル名</Label>
-              <Input
-                id="clubName"
-                type="text"
-                value={clubName}
-                readOnly
-                className="text-foreground"
+        <Card className="p-0 overflow-hidden shadow-xl">
+          <div className="flex flex-col md:flex-row">
+            {/* 画像エリア */}
+            <div className="md:w-1/2 w-full h-64 md:h-auto bg-muted flex items-center justify-center">
+              <img
+                src={imgSrc}
+                alt={clubName || "サークルイメージ"}
+                className="object-cover w-full h-full"
+                style={{ minHeight: "16rem" }}
+                onError={() => setImgSrc(fallbackImage)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="memberCount">人数</Label>
-              <Input
-                id="memberCount"
-                type="number"
-                value={memberCount}
-                readOnly
-                className="text-foreground"
-              />
+            {/* 情報エリア */}
+            <div className="md:w-1/2 w-full p-8 flex flex-col justify-center space-y-6">
+              <div>
+                <span className="text-sm font-semibold text-muted-foreground">大学名</span>
+                <div className="text-lg font-bold text-foreground mb-2">
+                  {universities.find(u => u.id.toString() === selectedUniversityId)?.name || "-"}
+                </div>
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-muted-foreground">人数</span>
+                <div className="text-lg text-foreground mb-2">{memberCount ? `${memberCount}人` : "-"}</div>
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-muted-foreground">サークル紹介</span>
+                <div className="text-base text-foreground whitespace-pre-line bg-muted/40 rounded-md p-3">
+                  {description || "紹介文はまだありません。"}
+                </div>
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">サークル紹介文</Label>
-              <Textarea
-                id="description"
-                value={description}
-                rows={6}
-                className="resize-none text-foreground"
-                readOnly
-              />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
         </Card>
       </div>
