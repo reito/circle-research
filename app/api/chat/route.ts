@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // サークルをカテゴリー分け（簡易的な分類）
+    // サークルをカテゴリー分け（改善版）
     const categorizeClubs = (clubs: any[]) => {
       const categories = {
         sports: [] as any[],
@@ -136,16 +136,38 @@ export async function POST(req: NextRequest) {
         const name = club.name.toLowerCase()
         const desc = (club.description || "").toLowerCase()
         
-        if (name.includes("野球") || name.includes("サッカー") || name.includes("テニス") || 
-            name.includes("バスケ") || name.includes("バレー") || name.includes("陸上") ||
-            name.includes("水泳") || name.includes("スポーツ") || desc.includes("運動")) {
+        // スポーツ系の判定（拡張版）
+        const sportsKeywords = [
+          "野球", "サッカー", "テニス", "バスケ", "バレー", "陸上", "水泳",
+          "スポーツ", "ラグビー", "アメフト", "ハンドボール", "卓球",
+          "バドミントン", "ゴルフ", "剣道", "柔道", "空手", "合気道",
+          "弓道", "なぎなた", "相撲", "レスリング", "ボクシング",
+          "スキー", "スノボ", "スノーボード", "スケート", "ホッケー",
+          "サーフィン", "ダイビング", "ヨガ", "フィットネス", "ジム",
+          "ランニング", "マラソン", "トライアスロン", "自転車", "競技"
+        ]
+        
+        // 文化系の判定（拡張版）
+        const cultureKeywords = [
+          "音楽", "美術", "演劇", "写真", "文芸", "映画", "書道",
+          "茶道", "華道", "花道", "囲碁", "将棋", "チェス", "競技かるた",
+          "研究会", "研究部", "学会", "勉強会", "ディベート", "模擬国連",
+          "漫画", "アニメ", "イラスト", "文学", "小説", "詩", "俳句",
+          "放送", "広報", "新聞", "雑誌", "出版", "映像", "メディア",
+          "プログラミング", "コンピュータ", "ロボット", "科学", "実験"
+        ]
+
+        // ダンスは特別処理（競技ダンスはスポーツ、それ以外は文化系）
+        const isDance = name.includes("ダンス") || name.includes("dance")
+        const isCompetitiveDance = isDance && (name.includes("競技") || desc.includes("競技"))
+        
+        if (sportsKeywords.some(keyword => name.includes(keyword) || desc.includes(keyword)) || isCompetitiveDance) {
           categories.sports.push(club)
-        } else if (name.includes("音楽") || name.includes("美術") || name.includes("演劇") || 
-                   name.includes("写真") || name.includes("文芸") || name.includes("映画") ||
-                   name.includes("ダンス") || desc.includes("文化")) {
+        } else if (cultureKeywords.some(keyword => name.includes(keyword) || desc.includes(keyword)) || (isDance && !isCompetitiveDance)) {
           categories.culture.push(club)
         } else if (name.includes("ボランティア") || name.includes("環境") || 
-                   name.includes("国際") || desc.includes("社会貢献")) {
+                   name.includes("国際") || name.includes("社会貢献") || 
+                   desc.includes("ボランティア") || desc.includes("社会貢献")) {
           categories.volunteer.push(club)
         } else {
           categories.other.push(club)
@@ -161,9 +183,11 @@ export async function POST(req: NextRequest) {
     const systemPrompt = `あなたは${universityName}のフレンドリーなサークル相談アドバイザーです。新入生の質問に答えつつ、積極的に会話を広げて相手の興味を引き出してください。
 
 【絶対に守るべき重要ルール】
-⚠️ 下記の【利用可能なサークル】リストにないサークルは絶対に言及しない
+⚠️ 下記の【利用可能なサークル】リストにある正確な名前のサークルのみ紹介する
+⚠️ 「スポーツ系サークル」「文化系サークル」などの一般的な名称は使わない
 ⚠️ 存在しないサークルを勝手に作り出して紹介してはいけない
-⚠️ 一般的なサークル名で回答せず、必ずリストの正確な名前を使う
+⚠️ リンク形式 [サークル名|club-info-view?id=ID] は実在するサークルにのみ使用
+⚠️ 各カテゴリーの説明は「スポーツ系には〜」のように言及し、具体的なサークル名を列挙
 
 【回答ルール】
 1. 質問に直接答える（カテゴリー質問には該当する複数のサークルを紹介）
@@ -197,15 +221,17 @@ ${categorizedClubs.other.length > 0 ? `\n✅ その他(${categorizedClubs.other.
 - 「どれか気になるものはありましたか？」
 
 【正しい回答例】
+Q: サークル何があるの？
+→ 「${universityName}にはスポーツ系で[バスケットボール部|club-info-view?id=22](26人)、文化系で[落語研究会|club-info-view?id=21](12人)や[漫画研究会|club-info-view?id=23](22人)、他にも[環境サークル|club-info-view?id=24](28人)などがあります！どんなジャンルに興味がありますか？」
+
 Q: スポーツ系はある？
-→ リストにスポーツ系がある場合: 「はい！${universityName}には[テニスサークル|club-info-view?id=1](25人)、[サッカー部|club-info-view?id=2](28人)などがあります。どちらも初心者歓迎ですよ！どれか気になりますか？」
-→ リストにスポーツ系がない場合: 「申し訳ないですが、${universityName}には現在スポーツ系のサークルがないようです。他のジャンルに興味はありますか？」
+→ リストにスポーツ系がある場合: 「はい！スポーツ系には[バスケットボール部|club-info-view?id=22](26人)があります。初心者歓迎ですよ！興味ありますか？」
 
 【絶対にダメな回答例】
+❌「[スポーツ系サークル|club-info-view?id=22]があります」（カテゴリー名にリンクを付ける）
+❌「[文化系サークル|club-info-view?id=25]」（存在しない一般的な名称）
 ❌「テニス部やサッカー部があります」（リストにない場合）
-❌「一般的にはバスケ部などがあります」（推測で答える）
-❌ リンクなしでサークルを紹介する
-❌ IDを直接表示する「ID:1」「詳細はこちら」などの不自然な表現`
+❌ リンクなしでサークルを紹介する`
 
     // OpenAI APIを呼び出し
     try {
