@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const id = searchParams.get("id")
     if (id) {
-      // id指定時は認証不要で単一クラブ情報を返す
+      // id指定時は認証不要で単一クラブ情報を返す（category/images含む）
       const club = await prisma.club.findUnique({
         where: { id: Number(id) },
         include: { university: true, owner: true },
@@ -53,6 +53,51 @@ export async function GET(req: NextRequest) {
     )
   }
 }
+// クラブ情報編集（PUT）: category/images対応
+export async function PUT(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const body = await req.json();
+    const { id, name, memberCount, description, universityId, category, images } = body;
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+    if (images && Array.isArray(images) && images.length > 5) {
+      return NextResponse.json({ error: "画像は最大5枚までです" }, { status: 400 });
+    }
+    // categoryはenum値のみ許容
+    const allowedCategories = ["SPORTS", "CULTURE", "OTHER"];
+    if (category && !allowedCategories.includes(category)) {
+      return NextResponse.json({ error: "Invalid category value" }, { status: 400 });
+    }
+    // 編集
+    const updateData = {
+      ...(name && { name }),
+      ...(memberCount !== undefined && { memberCount: Number(memberCount) }),
+      ...(description !== undefined && { description }),
+  ...(category && { category }),
+      ...(images && { images: { set: images } }),
+      ...(universityId && { university: { connect: { id: Number(universityId) } } }),
+      ...(session.user.id && { owner: { connect: { id: Number(session.user.id) } } }),
+    };
+    console.log("[PUT /api/clubs] updateData:", updateData);
+    const club = await prisma.club.update({
+      where: { id: Number(id) },
+      data: updateData,
+      include: { university: true, owner: true },
+    });
+    return NextResponse.json(club, { status: 200 });
+  } catch (error: any) {
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "Club not found" }, { status: 404 });
+    }
+    console.error("Error updating club:", error);
+    return NextResponse.json({ error: "Internal server error!" }, { status: 500 });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,7 +111,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { name, memberCount, description, universityId } = body
+    const { name, memberCount, description, universityId, category, images } = body
 
     // Validate input
     if (!name || !universityId) {
@@ -75,20 +120,27 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
+    if (images && Array.isArray(images) && images.length > 5) {
+      return NextResponse.json(
+        { error: "画像は最大5枚までです" },
+        { status: 400 }
+      )
+    }
 
-    console.log(session)
     // Create club
     const club = await prisma.club.create({
       data: {
-      name,
-      memberCount: memberCount ? Number(memberCount) : 1,
-      description: description || "",
-      universityId: Number(universityId),
-      ownerId: Number(session.user.id)
+        name,
+        memberCount: memberCount ? Number(memberCount) : 1,
+        description: description || "",
+        universityId: Number(universityId),
+        ownerId: Number(session.user.id),
+        category: category || "OTHER",
+        images: images || [],
       },
       include: {
-      university: true,
-      owner: true,
+        university: true,
+        owner: true,
       },
     })
 
