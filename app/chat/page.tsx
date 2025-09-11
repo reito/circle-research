@@ -119,7 +119,7 @@ export default function ChatPage() {
   }
 
   const handleBack = () => {
-    router.push(`/university-selection/${encodeURIComponent(kana)}`)
+    router.push("/kana-selection")
   }
 
   return (

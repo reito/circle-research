@@ -29,7 +29,12 @@ export default function KanaSelectionPage() {
   }
 
   const handleBackClick = () => {
-    router.push("/")
+    // ブラウザの履歴がある場合は戻る、ない場合はホームに移動
+    if (window.history.length > 1) {
+      router.back()
+    } else {
+      router.push("/")
+    }
   }
 
   return (

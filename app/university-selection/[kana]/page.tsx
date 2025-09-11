@@ -22,6 +22,15 @@ export default function UniversitySelectionPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    // ひらがなの検証
+    const validKana = ["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ", "さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と", "な", "に", "ぬ", "ね", "の", "は", "ひ", "ふ", "へ", "ほ", "ま", "み", "む", "め", "も", "や", "ゆ", "よ", "ら", "り", "る", "れ", "ろ", "わ", "ん"]
+    
+    if (!validKana.includes(selectedKana)) {
+      console.error("Invalid kana parameter:", selectedKana)
+      router.push("/kana-selection")
+      return
+    }
+
     // APIから大学データを取得
     const fetchUniversities = async () => {
       try {
@@ -44,10 +53,15 @@ export default function UniversitySelectionPage() {
     }
 
     fetchUniversities()
-  }, [selectedKana])
+  }, [selectedKana, router])
 
   const handleBackClick = () => {
-    router.push("/search")
+    // ブラウザの履歴がある場合は戻る、ない場合はひらがな選択画面に移動
+    if (window.history.length > 1) {
+      router.back()
+    } else {
+      router.push("/kana-selection")
+    }
   }
 
   const handleUniversityClick = (university: University) => {
@@ -100,8 +114,15 @@ export default function UniversitySelectionPage() {
               </Card>
             ))
           ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">該当する大学が見つかりませんでした。</p>
+            <div className="text-center py-8 space-y-4">
+              <div>
+                <p className="text-muted-foreground mb-2">「{selectedKana}」で始まる大学が見つかりませんでした。</p>
+                <p className="text-sm text-muted-foreground">別のひらがなを選択してください。</p>
+              </div>
+              <Button onClick={handleBackClick} variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                ひらがな選択に戻る
+              </Button>
             </div>
           )}
         </div>
