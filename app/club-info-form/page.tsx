@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { UploadCloud } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { ArrowLeft } from "lucide-react"
@@ -27,6 +28,11 @@ export default function ClubInfoFormPage() {
   const [success, setSuccess] = useState("")
   const [clubId, setClubId] = useState<string>("") // 編集時はclubId保持
   const [isEditing, setIsEditing] = useState(true)
+    // カテゴリー選択
+    const [category, setCategory] = useState<string>("")
+    // 画像アップロード
+    const [images, setImages] = useState<string[]>([])
+    const [imageFiles, setImageFiles] = useState<File[]>([])
 
   // 大学リストはAPIから取得
   // useEffectで初回取得
@@ -60,6 +66,8 @@ export default function ClubInfoFormPage() {
           setMemberCount(club.memberCount ? String(club.memberCount) : "")
           setDescription(club.description || "")
           setSelectedUniversityId(club.universityId ? String(club.universityId) : "")
+            setCategory(club.category || "")
+            setImages(club.images || [])
         }
       })
       .catch(() => {})
@@ -83,47 +91,52 @@ export default function ClubInfoFormPage() {
       setTimeout(() => setSuccess(""), 3000)
     }
     if (clubId) {
-      // 更新（PUT）
-      fetch(`/api/clubs/${clubId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: clubName,
-          memberCount: Number(memberCount),
-          description,
-          universityId: selectedUniversityId,
-          ownerId: userId,
-        }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (!data || data.error) {
-            setError(data.error || "更新に失敗しました")
-            return
-          }
-          onSuccess()
+        // 更新（PUT）
+        fetch(`/api/clubs`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: clubId,
+            name: clubName,
+            memberCount: Number(memberCount),
+            description,
+            universityId: selectedUniversityId,
+            ownerId: userId,
+            category,
+            images,
+          }),
         })
+          .then(res => res.json())
+          .then(data => {
+            if (!data || data.error) {
+              setError(data.error || "更新に失敗しました")
+              return
+            }
+            onSuccess()
+          })
     } else {
-      // 新規（POST）
-      fetch("/api/clubs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: clubName,
-          memberCount: Number(memberCount),
-          description,
-          universityId: selectedUniversityId,
-          ownerId: userId,
-        }),
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (!data || data.error) {
-            setError(data.error || "登録に失敗しました")
-            return
-          }
-          onSuccess()
+        // 新規（POST）
+        fetch("/api/clubs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: clubName,
+            memberCount: Number(memberCount),
+            description,
+            universityId: selectedUniversityId,
+            ownerId: userId,
+            category,
+            images,
+          }),
         })
+          .then(res => res.json())
+          .then(data => {
+            if (!data || data.error) {
+              setError(data.error || "登録に失敗しました")
+              return
+            }
+            onSuccess()
+          })
     }
   }
 
@@ -215,6 +228,62 @@ export default function ClubInfoFormPage() {
                 disabled={!isEditing}
               />
             </div>
+
+              {/* カテゴリー選択（DBのenumのみ） */}
+              <div className="space-y-2">
+                <Label htmlFor="category">カテゴリー</Label>
+                <Select value={category} onValueChange={setCategory} disabled={!isEditing}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="カテゴリーを選択してください" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SPORTS">スポーツ</SelectItem>
+                    <SelectItem value="CULTURE">文化</SelectItem>
+                    <SelectItem value="OTHER">その他</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 画像アップロード（最大5枚） */}
+              <div className="space-y-2">
+                <Label htmlFor="images">サークル画像（最大5枚）</Label>
+                <div className="flex gap-2 flex-wrap">
+                  {images.map((img, idx) => (
+                    <div key={idx} className="relative w-24 h-24 border rounded overflow-hidden">
+                      <img src={img} alt={`club-img-${idx}`} className="object-cover w-full h-full" />
+                      {isEditing && (
+                        <button type="button" className="absolute top-1 right-1 bg-white rounded-full p-1 text-xs" onClick={() => {
+                          setImages(images.filter((_, i) => i !== idx))
+                        }}>×</button>
+                      )}
+                    </div>
+                  ))}
+                  {isEditing && images.length < 5 && (
+                    <label className="w-24 h-24 border rounded flex flex-col items-center justify-center cursor-pointer hover:bg-muted">
+                      <UploadCloud className="w-6 h-6 mb-1 text-muted-foreground" />
+                      <span className="text-xs">追加</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          // 画像アップロード処理（仮: base64）
+                          const reader = new FileReader()
+                          reader.onload = () => {
+                            if (typeof reader.result === "string") {
+                              setImages([...images, reader.result])
+                            }
+                          }
+                          reader.readAsDataURL(file)
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">画像は最大5枚までアップロードできます。※本番はS3等に保存推奨</p>
+              </div>
 
               {isEditing && (
                 <Button onClick={handleSave} className="w-full" size="lg">

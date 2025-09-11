@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,15 +8,16 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Send } from "lucide-react"
 
 // メッセージ内のリンクを解析してクリック可能にする関数
-const parseMessageWithLinks = (text: string, router: any) => {
+const parseMessageWithLinks = (text: string): React.ReactNode => {
   // [サークル名](club-info-view?id=123) 形式（Markdownリンク）を解析
   const linkRegex = /\[([^\]]+)\]\(club-info-view\?id=(\d+)\)/g
-  const elements: (string | JSX.Element)[] = []
+  const elements: React.ReactNode[] = []
   let lastIndex = 0
   let match
   let keyIndex = 0
 
   while ((match = linkRegex.exec(text)) !== null) {
+    console.log("Found link match:", match) // デバッグ用ログ
     // マッチ前のテキスト
     if (match.index > lastIndex) {
       elements.push(text.substring(lastIndex, match.index))
@@ -27,10 +26,11 @@ const parseMessageWithLinks = (text: string, router: any) => {
     // リンク部分
     const clubName = match[1]
     const clubId = match[2]
+    console.log("Creating link for:", clubName, "with ID:", clubId) // デバッグ用ログ
     elements.push(
       <button
         key={`link-${keyIndex++}`}
-        onClick={() => router.push(`/club-info-view?id=${clubId}`)}
+        onClick={() => window.open(`/club-info-view?id=${clubId}`, '_blank')}
         className="text-blue-600 hover:text-blue-800 underline font-medium"
       >
         {clubName}
@@ -45,6 +45,7 @@ const parseMessageWithLinks = (text: string, router: any) => {
     elements.push(text.substring(lastIndex))
   }
 
+  console.log("Final parsed elements:", elements) // デバッグ用ログ
   return elements.length > 0 ? elements : text
 }
 
@@ -124,8 +125,10 @@ export default function ChatPage() {
       })
 
       const data = await response.json()
+      console.log("API Response:", data) // デバッグ用ログ
 
       if (response.ok && data.response) {
+        console.log("Bot response text:", data.response) // デバッグ用ログ
         const botResponse: Message = {
           id: messages.length + 2,
           text: data.response,
@@ -194,7 +197,7 @@ export default function ChatPage() {
                 }`}
               >
                 <div className="text-sm leading-relaxed">
-                  {message.isUser ? message.text : parseMessageWithLinks(message.text, router)}
+                  {message.isUser ? message.text : parseMessageWithLinks(message.text)}
                 </div>
                 <p
                   className={`text-xs mt-1 ${message.isUser ? "text-primary-foreground/70" : "text-muted-foreground"}`}
