@@ -34,7 +34,16 @@ export default function ClubInfoFormPage() {
   useEffect(() => {
     fetch("/api/universities")
       .then(res => res.json())
-      .then(data => setUniversities(data))
+      .then(data => {
+        // APIレスポンスの形式に合わせて調整
+        if (data.universities) {
+          setUniversities(data.universities)
+        } else if (Array.isArray(data)) {
+          setUniversities(data)
+        } else {
+          setUniversities([])
+        }
+      })
       .catch(() => setUniversities([]))
   }, [])
 
