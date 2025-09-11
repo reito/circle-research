@@ -11,8 +11,8 @@ import { ArrowLeft, Send } from "lucide-react"
 
 // メッセージ内のリンクを解析してクリック可能にする関数
 const parseMessageWithLinks = (text: string, router: any) => {
-  // [サークル名|club-info-view?id=123] 形式を解析
-  const linkRegex = /\[([^\]]+)\|club-info-view\?id=(\d+)\]/g
+  // [サークル名](club-info-view?id=123) 形式（Markdownリンク）を解析
+  const linkRegex = /\[([^\]]+)\]\(club-info-view\?id=(\d+)\)/g
   const elements: (string | JSX.Element)[] = []
   let lastIndex = 0
   let match
@@ -103,6 +103,12 @@ export default function ChatPage() {
     setIsLoading(true)
 
     try {
+      // 会話履歴を構築（最新20往復分 = 40メッセージ）
+      const conversationHistory = messages.slice(-40).map(msg => ({
+        role: msg.isUser ? "user" : "assistant",
+        content: msg.text
+      }))
+      
       // AI APIを呼び出し
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -113,6 +119,7 @@ export default function ChatPage() {
           message: messageText, // 保存した値を使用
           universityName: universityName,
           universityId: universityId,
+          conversationHistory: conversationHistory,
         }),
       })
 

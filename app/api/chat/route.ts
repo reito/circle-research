@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { message, universityName, universityId } = body
+    const { message, universityName, universityId, conversationHistory = [] } = body
     
     console.log("Chat API called with:", { message, universityName, universityId })
 
@@ -186,7 +186,8 @@ export async function POST(req: NextRequest) {
 ⚠️ 下記の【利用可能なサークル】リストにある正確な名前のサークルのみ紹介する
 ⚠️ 「スポーツ系サークル」「文化系サークル」などの一般的な名称は使わない
 ⚠️ 存在しないサークルを勝手に作り出して紹介してはいけない
-⚠️ リンク形式 [サークル名|club-info-view?id=ID] は実在するサークルにのみ使用
+⚠️ サークル名を出すときは必ずリンク形式 [サークル名|club-info-view?id=ID] を使用する
+⚠️ リンクなしでサークル名を書いてはいけない（例：「柔道部」や「剣道部」と書くのはダメ）
 ⚠️ 各カテゴリーの説明は「スポーツ系には〜」のように言及し、具体的なサークル名を列挙
 
 【回答ルール】
@@ -207,11 +208,12 @@ ${categorizedClubs.culture.length > 0 ? `\n✅ 文化系(${categorizedClubs.cult
 ${categorizedClubs.volunteer.length > 0 ? `\n✅ ボランティア系(${categorizedClubs.volunteer.length}個): ${categorizedClubs.volunteer.map(c => `${c.name}[ID:${c.id}](${c.memberCount}人)`).join(", ")}` : "\n❌ ボランティア系: なし"}
 ${categorizedClubs.other.length > 0 ? `\n✅ その他(${categorizedClubs.other.length}個): ${categorizedClubs.other.map(c => `${c.name}[ID:${c.id}](${c.memberCount}人)`).join(", ")}` : "\n❌ その他: なし"}` : "\n【サークル情報】現在データを準備中です。"}
 
-【サークルのリンク表記ルール】
-- サークルを紹介する際は必ずサークル名をリンク形式で表記
+【サークルのリンク表記の厳格なルール】
+- サークル名を記載する際は、100%必ずリンク形式で表記する
 - 形式: [サークル名|club-info-view?id=サークルID]
 - 例: [テニスサークル|club-info-view?id=1]、[サッカー部|club-info-view?id=2]
 - IDを直接言及せず、自然な文章で紹介
+- リンクを付けずにサークル名を書くことは厳禁
 
 【問いかけ例】
 - 「どんなジャンルに興味がありますか？」
@@ -222,25 +224,35 @@ ${categorizedClubs.other.length > 0 ? `\n✅ その他(${categorizedClubs.other.
 
 【正しい回答例】
 Q: サークル何があるの？
-→ 「${universityName}にはスポーツ系で[バスケットボール部|club-info-view?id=22](26人)、文化系で[落語研究会|club-info-view?id=21](12人)や[漫画研究会|club-info-view?id=23](22人)、他にも[環境サークル|club-info-view?id=24](28人)などがあります！どんなジャンルに興味がありますか？」
+✅ 「${universityName}にはスポーツ系で[バスケットボール部|club-info-view?id=22](26人)、文化系で[落語研究会|club-info-view?id=21](12人)や[漫画研究会|club-info-view?id=23](22人)、他にも[環境サークル|club-info-view?id=24](28人)などがあります！どんなジャンルに興味がありますか？」
 
 Q: スポーツ系はある？
-→ リストにスポーツ系がある場合: 「はい！スポーツ系には[バスケットボール部|club-info-view?id=22](26人)があります。初心者歓迎ですよ！興味ありますか？」
+✅ リストにスポーツ系がある場合: 「はい！スポーツ系には[バスケットボール部|club-info-view?id=22](26人)があります。初心者歓迎ですよ！興味ありますか？」
 
 【絶対にダメな回答例】
+❌「柔道部や剣道部があります」（リンクなし）
+❌「スポーツ系で柔道部、文化系でアニメ研究会」（リンクなし）
 ❌「[スポーツ系サークル|club-info-view?id=22]があります」（カテゴリー名にリンクを付ける）
 ❌「[文化系サークル|club-info-view?id=25]」（存在しない一般的な名称）
-❌「テニス部やサッカー部があります」（リストにない場合）
-❌ リンクなしでサークルを紹介する`
+❌「テニス部やサッカー部があります」（リストにない場合）`
 
+    // 会話履歴を構築（最大20回まで保持）
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+      { role: "system", content: systemPrompt },
+    ]
+    
+    // 過去の会話履歴を追加（最新20回分）
+    const recentHistory = conversationHistory.slice(-40) // 20往復 = 40メッセージ
+    messages.push(...recentHistory)
+    
+    // 現在のユーザーメッセージを追加
+    messages.push({ role: "user", content: message })
+    
     // OpenAI APIを呼び出し
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message },
-        ],
+        messages: messages,
         temperature: 0.7,
         max_tokens: 300,
       })
