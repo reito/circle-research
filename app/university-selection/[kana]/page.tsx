@@ -1,100 +1,57 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useRouter, useParams } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, GraduationCap } from "lucide-react"
+
+interface University {
+  id: number
+  name: string
+  reading: string | null
+  domain: string | null
+  activeClubCount: number
+}
 
 export default function UniversitySelectionPage() {
   const router = useRouter()
   const params = useParams()
   const selectedKana = decodeURIComponent(params.kana as string)
+  const [universities, setUniversities] = useState<University[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const universityReadings: { [key: string]: string } = {
-    青山学院大学: "あおやまがくいんだいがく",
-    愛知大学: "あいちだいがく",
-    秋田大学: "あきただいがく",
-    旭川大学: "あさひかわだいがく",
-    関西大学: "かんさいだいがく",
-    関西学院大学: "かんせいがくいんだいがく",
-    京都大学: "きょうとだいがく",
-    九州大学: "きゅうしゅうだいがく",
-    慶應義塾大学: "けいおうぎじゅくだいがく",
-    埼玉大学: "さいたまだいがく",
-    札幌大学: "さっぽろだいがく",
-    静岡大学: "しずおかだいがく",
-    上智大学: "じょうちだいがく",
-    東京大学: "とうきょうだいがく",
-    東北大学: "とうほくだいがく",
-    東海大学: "とうかいだいがく",
-    筑波大学: "つくばだいがく",
-    名古屋大学: "なごやだいがく",
-    新潟大学: "にいがただいがく",
-    日本大学: "にほんだいがく",
-    北海道大学: "ほっかいどうだいがく",
-    法政大学: "ほうせいだいがく",
-    広島大学: "ひろしまだいがく",
-    明治大学: "めいじだいがく",
-    宮城大学: "みやぎだいがく",
-    山形大学: "やまがただいがく",
-    横浜国立大学: "よこはまこくりつだいがく",
-    立教大学: "りっきょうだいがく",
-    立命館大学: "りつめいかんだいがく",
-    龍谷大学: "りゅうこくだいがく",
-    早稲田大学: "わせだだいがく",
-  }
-
-  const allUniversities = [
-    "青山学院大学",
-    "愛知大学",
-    "秋田大学",
-    "旭川大学",
-    "関西大学",
-    "関西学院大学",
-    "京都大学",
-    "九州大学",
-    "慶應義塾大学",
-    "埼玉大学",
-    "札幌大学",
-    "静岡大学",
-    "上智大学",
-    "東京大学",
-    "東北大学",
-    "東海大学",
-    "筑波大学",
-    "名古屋大学",
-    "新潟大学",
-    "日本大学",
-    "北海道大学",
-    "法政大学",
-    "広島大学",
-    "明治大学",
-    "宮城大学",
-    "山形大学",
-    "横浜国立大学",
-    "立教大学",
-    "立命館大学",
-    "龍谷大学",
-    "早稲田大学",
-  ]
-
-  const filteredUniversities = allUniversities.filter((university) => {
-    // 実在大学の場合はふりがなで比較
-    const reading = universityReadings[university]
-    if (reading) {
-      return reading.startsWith(selectedKana)
+  useEffect(() => {
+    // APIから大学データを取得
+    const fetchUniversities = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch(`/api/universities?kana=${encodeURIComponent(selectedKana)}`)
+        const data = await response.json()
+        
+        if (response.ok) {
+          setUniversities(data.universities || [])
+        } else {
+          console.error("Failed to fetch universities")
+          setUniversities([])
+        }
+      } catch (error) {
+        console.error("Error fetching universities:", error)
+        setUniversities([])
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    // ふりがなが登録されていない場合は漢字で比較（フォールバック）
-    return university.startsWith(selectedKana)
-  })
-
-  const handleUniversityClick = (university: string) => {
-    router.push(`/chat?university=${encodeURIComponent(university)}&kana=${encodeURIComponent(selectedKana)}`)
-  }
+    fetchUniversities()
+  }, [selectedKana])
 
   const handleBackClick = () => {
-    router.push("/kana-selection")
+    router.push("/search")
+  }
+
+  const handleUniversityClick = (university: University) => {
+    router.push(`/chat?university=${encodeURIComponent(university.name)}&universityId=${university.id}&kana=${encodeURIComponent(selectedKana)}`)
   }
 
   return (
@@ -107,34 +64,45 @@ export default function UniversitySelectionPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-foreground">「{selectedKana}」で始まる大学</h1>
-            <p className="text-muted-foreground">{filteredUniversities.length}校の大学が見つかりました</p>
+            <p className="text-muted-foreground">
+              {isLoading ? "読み込み中..." : `${universities.length}校の大学が見つかりました`}
+            </p>
           </div>
         </div>
 
         {/* University List */}
         <div className="space-y-3">
-          {filteredUniversities.length > 0 ? (
-            filteredUniversities.map((university, index) => (
-              <Card key={index} className="hover:shadow-md transition-shadow">
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+              <p className="mt-2 text-muted-foreground">大学データを読み込んでいます...</p>
+            </div>
+          ) : universities.length > 0 ? (
+            universities.map((university) => (
+              <Card key={university.id} className="hover:shadow-md transition-shadow">
                 <Button
                   onClick={() => handleUniversityClick(university)}
                   variant="ghost"
                   className="w-full p-4 h-auto justify-start text-left"
                 >
-                  <div>
-                    <h3 className="font-semibold text-lg">{university}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">サークル・部活動情報を見る</p>
+                  <div className="flex items-center justify-between w-full">
+                    <div>
+                      <h3 className="font-semibold text-lg">{university.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {university.activeClubCount > 0 
+                          ? `${university.activeClubCount}個のアクティブなサークル・部活動`
+                          : "サークル・部活動情報を見る"}
+                      </p>
+                    </div>
+                    <GraduationCap className="h-5 w-5 text-muted-foreground" />
                   </div>
                 </Button>
               </Card>
             ))
           ) : (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">「{selectedKana}」で始まる大学が見つかりませんでした</p>
-              <Button onClick={handleBackClick} variant="outline" className="mt-4 bg-transparent">
-                文字選択に戻る
-              </Button>
-            </Card>
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">該当する大学が見つかりませんでした。</p>
+            </div>
           )}
         </div>
       </div>

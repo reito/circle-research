@@ -3,18 +3,48 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(req: NextRequest) {
   try {
+    const searchParams = req.nextUrl.searchParams
+    const kana = searchParams.get("kana")
+
     const universities = await prisma.university.findMany({
+      where: kana ? {
+        reading: {
+          startsWith: kana,
+        },
+      } : undefined,
       select: {
         id: true,
         name: true,
+        reading: true,
         domain: true,
+        _count: {
+          select: {
+            clubs: {
+              where: {
+                isActive: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        name: "asc",
+        reading: "asc",
       },
     })
 
-    return NextResponse.json(universities)
+    // レスポンス用に整形
+    const formattedUniversities = universities.map((uni) => ({
+      id: uni.id,
+      name: uni.name,
+      reading: uni.reading,
+      domain: uni.domain,
+      activeClubCount: uni._count.clubs,
+    }))
+
+    return NextResponse.json({
+      universities: formattedUniversities,
+      total: formattedUniversities.length,
+    })
   } catch (error) {
     console.error("Error fetching universities:", error)
     return NextResponse.json(

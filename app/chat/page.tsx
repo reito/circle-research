@@ -20,6 +20,7 @@ export default function ChatPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const universityName = searchParams.get("university") || "大学"
+  const universityId = searchParams.get("universityId") || ""
   const kana = searchParams.get("kana") || "あ"
 
   const [messages, setMessages] = useState<Message[]>([
@@ -30,6 +31,11 @@ export default function ChatPage() {
       timestamp: new Date(),
     },
   ])
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
   const [inputText, setInputText] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -67,7 +73,7 @@ export default function ChatPage() {
         body: JSON.stringify({
           message: messageText, // 保存した値を使用
           universityName: universityName,
-          // 将来的に大学IDを追加する場合はここに
+          universityId: universityId,
         }),
       })
 
@@ -145,10 +151,12 @@ export default function ChatPage() {
                 <p
                   className={`text-xs mt-1 ${message.isUser ? "text-primary-foreground/70" : "text-muted-foreground"}`}
                 >
-                  {message.timestamp.toLocaleTimeString("ja-JP", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {isHydrated
+                    ? message.timestamp.toLocaleTimeString("ja-JP", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : ""}
                 </p>
               </Card>
             </div>
