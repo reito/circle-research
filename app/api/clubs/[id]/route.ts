@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { prisma } from "@/lib/prisma"
+import { authOptions } from "@/lib/auth"
 
 export async function GET(
   req: NextRequest,
@@ -8,7 +9,7 @@ export async function GET(
 ) {
   try {
     const clubId = parseInt(params.id)
-    
+
     const club = await prisma.club.findUnique({
       where: { id: clubId },
       include: {
@@ -45,8 +46,8 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession()
-    
+    const session = await getServerSession(authOptions)
+
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -60,7 +61,7 @@ export async function PUT(
 
     // Get user
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: Number(session.user.id) },
     })
 
     if (!user) {
@@ -104,7 +105,7 @@ export async function PUT(
         { status: 409 }
       )
     }
-    
+
     console.error("Error updating club:", error)
     return NextResponse.json(
       { error: "Internal server error" },
@@ -119,7 +120,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession()
-    
+
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -131,7 +132,7 @@ export async function DELETE(
 
     // Get user
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: Number(session.user.id) },
     })
 
     if (!user) {

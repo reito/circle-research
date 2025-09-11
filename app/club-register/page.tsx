@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
+import { signIn } from "next-auth/react"
 
 export default function ClubRegisterPage() {
   const router = useRouter()
@@ -16,18 +17,58 @@ export default function ClubRegisterPage() {
   const [error, setError] = useState("")
 
   const handleRegister = () => {
-    // 汎用登録ページへリダイレクト
-    // router.push("/register")
-    // return
+
+    setError("")
+
+    if (newId.length < 3) {
+      setError("IDは3文字以上で入力してください")
+      return
+    }
 
     if (newPassword.length < 6) {
       setError("パスワードは6文字以上で入力してください")
       return
     }
 
-    // 実際のアプリではここでアカウント情報をデータベースに保存
-    router.push(`/club-info-form?id=${encodeURIComponent(newId)}`)
+    if (newPassword !== confirmPassword) {
+      setError("パスワードが一致しません")
+      return
+    }
+
+
+    // アカウント情報をデータベースに保存
+    fetch("/api/club-register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: newId,
+        password: newPassword,
+      }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("登録に失敗しました")
+        return res.json()
+      })
+      .then((data) => {
+        if (data?.success) {
+          // 登録後に自動ログイン
+          signIn("credentials", {
+            redirect: false,
+            id: newId,
+            password: newPassword,
+            callbackUrl: "/club-info-form"
+          }).then(() => {
+            router.push("/club-info-form")
+          })
+        }
+      })
+      .catch((err) => {
+        setError(err.message)
+      })
   }
+
 
   const handleBack = () => {
     router.push("/club-login")
