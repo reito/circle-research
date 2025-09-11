@@ -15,6 +15,7 @@ model University {
   id        Int      @id @default(autoincrement())
   name      String   @unique
   domain    String?
+  reading   String?  // ふりがなフィールドを追加
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
