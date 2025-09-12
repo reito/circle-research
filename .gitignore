@@ -25,3 +25,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated images (AI-generated club images)
+/public/generated-images/*.png
+/public/generated-images/*.jpg
+/public/generated-images/*.jpeg
