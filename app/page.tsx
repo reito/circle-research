@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 
 export default function HomePage() {
   const router = useRouter()
@@ -19,9 +20,24 @@ export default function HomePage() {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         {/* Title Section */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-foreground text-balance">サークルリサーチ</h1>
-          <p className="text-muted-foreground text-lg">あなたにぴったりのサークル・部活動を見つけよう</p>
+        <div className="text-center space-y-6">
+          {/* Logo */}
+          <div className="flex justify-center">
+            <div className="relative w-64 h-64 mb-4">
+              <Image
+                src="/circle_logo.png"
+                alt="サークルリサーチ ロゴ"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-foreground text-balance">サークルリサーチ</h1>
+            <p className="text-muted-foreground text-lg">あなたにぴったりのサークル・部活動を見つけよう</p>
+          </div>
         </div>
 
         {/* Action Buttons */}
