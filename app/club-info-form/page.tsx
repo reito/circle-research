@@ -282,7 +282,10 @@ export default function ClubInfoFormPage() {
                     </label>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">画像は最大5枚までアップロードできます。※本番はS3等に保存推奨</p>
+                <p className="text-xs text-muted-foreground">
+                  画像は最大5枚までアップロードできます。<br />
+                  画像を提出しない場合、サークル名と説明文から生成AIにて自動作成されます。
+                </p>
               </div>
 
               {isEditing && (
@@ -301,7 +304,7 @@ export default function ClubInfoFormPage() {
             {/* Info */}
             <div className="mt-4 p-3 bg-muted rounded-md">
               <p className="text-xs text-muted-foreground text-center">
-                保存後、サークル情報の管理画面に移ります。後から編集することも可能です。
+                サークル情報は後からいつでも編集可能です。
               </p>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}

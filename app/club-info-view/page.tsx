@@ -20,8 +20,10 @@ function ClubInfoContent() {
   const [memberCount, setMemberCount] = useState("")
   const [description, setDescription] = useState("")
   const [error, setError] = useState("")
-    const [images, setImages] = useState<string[]>([])
-    const [imageUrl, setImageUrl] = useState<string>("")
+  const [images, setImages] = useState<string[]>([])
+  const [imageUrl, setImageUrl] = useState<string>("")
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const [club, setClub] = useState<any>(null)
 
   // 大学リスト取得
   useEffect(() => {
@@ -45,23 +47,79 @@ function ClubInfoContent() {
     fetch(`/api/clubs?id=${clubId}`)
       .then(res => res.json())
       .then(data => {
-        const club = Array.isArray(data) ? data[0] : data
-        if (club && club.id) {
-          setClubName(club.name || "")
-          setMemberCount(club.memberCount ? String(club.memberCount) : "")
-          setDescription(club.description || "")
-          setSelectedUniversityId(club.universityId ? String(club.universityId) : "")
-          setImages(Array.isArray(club.images) ? club.images : [])
+        const clubData = Array.isArray(data) ? data[0] : data
+        if (clubData && clubData.id) {
+          setClub(clubData)
+          setClubName(clubData.name || "")
+          setMemberCount(clubData.memberCount ? String(clubData.memberCount) : "")
+          setDescription(clubData.description || "")
+          setSelectedUniversityId(clubData.universityId ? String(clubData.universityId) : "")
+          setImages(Array.isArray(clubData.images) ? clubData.images : [])
           // 画像がなければUnsplash
-          if (!club.images || club.images.length === 0) {
-            const uniName = universities.find(u => u.id.toString() === (club.universityId ? String(club.universityId) : ""))?.name || "circle"
-            const query = encodeURIComponent(`${club.name} ${uniName}`)
+          if (!clubData.images || clubData.images.length === 0) {
+            const uniName = universities.find(u => u.id.toString() === (clubData.universityId ? String(clubData.universityId) : ""))?.name || "circle"
+            const query = encodeURIComponent(`${clubData.name} ${uniName}`)
             setImageUrl(`https://source.unsplash.com/800x600/?${query}`)
           }
         }
       })
       .catch(() => setError("サークル情報の取得に失敗しました"))
   }, [clubId, universities])
+
+  // OpenAIで画像を生成する関数
+  const generateClubImage = async () => {
+    if (!club || !club.id || isGeneratingImage) return
+
+    setIsGeneratingImage(true)
+    setError("")
+
+    try {
+      const response = await fetch('/api/generate-club-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clubId: club.id,
+          clubName: club.name,
+          description: club.description,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || '画像生成に失敗しました')
+      }
+
+      if (result.success && result.imageUrl) {
+        // 生成された画像をimagesに追加
+        setImages(prev => [...prev, result.imageUrl])
+        setError("")
+      } else if (result.images) {
+        // 既に画像が存在する場合
+        setImages(result.images)
+      }
+
+    } catch (err) {
+      console.error('画像生成エラー:', err)
+      setError(`画像生成に失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}`)
+    } finally {
+      setIsGeneratingImage(false)
+    }
+  }
+
+  // 画像がない場合の自動生成（ページ読み込み時に一度だけ実行）
+  useEffect(() => {
+    if (club && club.id && (!images || images.length === 0) && !isGeneratingImage) {
+      // 少し遅延を入れてから自動生成を開始
+      const timer = setTimeout(() => {
+        generateClubImage()
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [club, images])
 
 
   // 画像のonErrorでfallback
@@ -112,10 +170,23 @@ function ClubInfoContent() {
                   <CarouselPrevious />
                   <CarouselNext />
                 </Carousel>
+              ) : isGeneratingImage ? (
+                <div className="w-full aspect-[4/3] flex flex-col items-center justify-center text-muted-foreground">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                  <span className="text-lg mb-2">AI画像を生成中...</span>
+                  <span className="text-sm text-center">サークル情報から画像を作成しています</span>
+                </div>
               ) : (
                 <div className="w-full aspect-[4/3] flex flex-col items-center justify-center text-muted-foreground">
                   <ImageOff className="w-16 h-16 mb-2" />
-                  <span className="text-lg">No Image</span>
+                  <span className="text-lg mb-2">No Image</span>
+                  <button
+                    onClick={generateClubImage}
+                    className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                    disabled={!club || isGeneratingImage}
+                  >
+                    AI画像を生成する
+                  </button>
                 </div>
               )}
             </div>
